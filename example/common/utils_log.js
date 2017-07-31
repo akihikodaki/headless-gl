@@ -10,16 +10,20 @@ function getLogger (category, level) {
   }
 
   log4js.configure({
-    appenders: [
-      {
+    appenders: {
+      console: {
         type: 'console'
       }
-    ]
+    },
+    categories: {
+      default: {
+        appenders: ['console'],
+        level
+      }
+    }
   })
 
-  log = log4js.getLogger(category)
-  log.setLevel(level)
-  return log
+  return log4js.getLogger(category)
 }
 
 function Log (filename, level) {
