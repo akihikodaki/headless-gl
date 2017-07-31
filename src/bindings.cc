@@ -154,6 +154,7 @@ NAN_MODULE_INIT(Init) {
   JS_GL_METHOD("getVertexAttrib", GetVertexAttrib);
   JS_GL_METHOD("getSupportedExtensions", GetSupportedExtensions);
   JS_GL_METHOD("getExtension", GetExtension);
+  JS_GL_METHOD("checkAngleInstancedArraysSupport", CheckAngleInstancedArraysSupport);
   JS_GL_METHOD("checkFramebufferStatus", CheckFramebufferStatus);
   JS_GL_METHOD("getShaderPrecisionFormat", GetShaderPrecisionFormat);
   JS_GL_METHOD("frontFace", FrontFace);

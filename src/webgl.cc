@@ -9,12 +9,6 @@ EGLDisplay             WebGLRenderingContext::DISPLAY;
 WebGLRenderingContext* WebGLRenderingContext::ACTIVE = NULL;
 WebGLRenderingContext* WebGLRenderingContext::CONTEXT_LIST_HEAD = NULL;
 
-const char* REQUIRED_EXTENSIONS[] = {
-  "GL_OES_packed_depth_stencil",
-  "GL_ANGLE_instanced_arrays",
-  NULL
-};
-
 #define GL_METHOD(method_name) NAN_METHOD(WebGLRenderingContext:: method_name)
 
 #define GL_BOILERPLATE  \
@@ -128,13 +122,11 @@ WebGLRenderingContext::WebGLRenderingContext(
   //Check extensions
   const char *extensionString = (const char*)((glGetString)(GL_EXTENSIONS));
 
-  //Load required extensions
-  for(const char** rext = REQUIRED_EXTENSIONS; *rext; ++rext) {
-    if(!strstr(extensionString, *rext)) {
-      dispose();
-      state = GLCONTEXT_STATE_ERROR;
-      return;
-    }
+  //Load a required extension: OES_packed_depth_stencil
+  if(!strstr(extensionString, "GL_OES_packed_depth_stencil")) {
+    dispose();
+    state = GLCONTEXT_STATE_ERROR;
+    return;
   }
 
   //Select best preferred depth
@@ -169,6 +161,13 @@ void WebGLRenderingContext::setError(GLenum error) {
   if (prevError == GL_NO_ERROR) {
     lastError = error;
   }
+}
+
+bool WebGLRenderingContext::checkAngleInstancedArraysSupportInternal() {
+  const char *extensions = reinterpret_cast<const char*>(
+    glGetString(GL_EXTENSIONS));
+
+  return strstr(extensions, "GL_ANGLE_instanced_arrays");
 }
 
 void WebGLRenderingContext::dispose() {
@@ -2037,17 +2036,33 @@ GL_METHOD(GetVertexAttrib) {
 GL_METHOD(GetSupportedExtensions) {
   GL_BOILERPLATE;
 
-  const char *extensions = reinterpret_cast<const char*>(
-    (inst->glGetString)(GL_EXTENSIONS));
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::EscapableHandleScope scope(isolate);
+  v8::Local<v8::Array> array;
 
-  info.GetReturnValue().Set(
-    Nan::New<v8::String>(extensions).ToLocalChecked());
+  if ((inst->checkAngleInstancedArraysSupportInternal)()) {
+    array = v8::Array::New(isolate, 3);
+    Nan::Set(array, 2, Nan::New<v8::String>("ANGLE_instanced_arrays").ToLocalChecked());
+  } else {
+    array = v8::Array::New(isolate, 2);
+  }
+
+  Nan::Set(array, 0, Nan::New<v8::String>("STACKGL_resize_drawingbuffer").ToLocalChecked());
+  Nan::Set(array, 1, Nan::New<v8::String>("STACKGL_destroy_context").ToLocalChecked());
+
+  info.GetReturnValue().Set(scope.Escape(array));
 }
 
 GL_METHOD(GetExtension) {
   GL_BOILERPLATE;
 
   //TODO
+}
+
+GL_METHOD(CheckAngleInstancedArraysSupport) {
+  GL_BOILERPLATE;
+
+  info.GetReturnValue().Set(Nan::New<v8::Boolean>((inst->checkAngleInstancedArraysSupportInternal)()));
 }
 
 GL_METHOD(CheckFramebufferStatus) {

@@ -666,14 +666,6 @@ gl.getContextAttributes = function () {
   return this._contextattributes
 }
 
-gl.getSupportedExtensions = function getSupportedExtensions () {
-  return [
-    'ANGLE_instanced_arrays',
-    'STACKGL_resize_drawingbuffer',
-    'STACKGL_destroy_context'
-  ]
-}
-
 function createANGLEInstancedArrays (context) {
   function checkInstancedVertexAttribState (context, maxIndex, primCount) {
     var program = context._activeProgram
@@ -874,6 +866,9 @@ function createANGLEInstancedArrays (context) {
   return result
 }
 
+var _checkAngleInstancedArraysSupport = gl.checkAngleInstancedArraysSupport;
+delete gl.checkAngleInstancedArraysSupport;
+
 gl.getExtension = function getExtension (name) {
   var str = name.toLowerCase()
   if (str in this._extensions) {
@@ -882,7 +877,9 @@ gl.getExtension = function getExtension (name) {
   var ext = null
   switch (str) {
     case 'angle_instanced_arrays':
-      ext = createANGLEInstancedArrays(this)
+      if (_checkAngleInstancedArraysSupport.call(this)) {
+        ext = createANGLEInstancedArrays(this)
+      }
       break
     case 'stackgl_destroy_context':
       ext = new STACKGL_destroy_context()
